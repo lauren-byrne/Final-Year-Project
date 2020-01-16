@@ -15,15 +15,18 @@ import cv2
 import dlib
 import csv
 
-
 # dlib face detector and facial landmark detector models
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-face_points = list()
 
-cap = cv2.VideoCapture(0)
+capture = False
+numframes = 5
+currentframes = 0
+cap = cv2.VideoCapture('testvideo.mp4')
+
 
 while True:
+
     _, frame = cap.read()
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -33,6 +36,7 @@ while True:
         # can change to get(5) - will get
         size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
                 int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+
 
     faces = detector(gray)
 
@@ -53,7 +57,13 @@ while True:
     cv2.imshow('frame', frame)
 
     # save on pressing 'y'
-    if cv2.waitKey(1) & 0xFF == ord('y'):
+    if (cv2.waitKey(1) & 0xFF == ord('y')) or capture:
+        if currentframes < numframes:
+            capture = True
+            currentframes = currentframes+1
+        if currentframes == numframes:
+            capture = False
+            currentframes = 0
         for n in range(0, 68):
             x = landmarks.part(n).x
             y = landmarks.part(n).y
@@ -68,10 +78,9 @@ while True:
 
         face_points = []
 
-    if cv2.waitKey(10) == 27:
+    if cv2.waitKey(1) == 27:
         break
 
 cap.release()
 cv2.destroyAllWindows()
 
-# print('landmarks:  ', face_points)
