@@ -89,7 +89,7 @@ while True:
         for n in range(0, 68):
             x = landmarks.part(n).x
             y = landmarks.part(n).y
-            cv2.circle(frame, (x, y), 1, (255, 0, 0), -1)
+            #cv2.circle(frame, (x, y), 1, (255, 0, 0), -1)
 
         RightEyeX = landmarks.part(46).x
         RightEyeY = landmarks.part(46).y
@@ -108,19 +108,37 @@ while True:
                                     (landmarks.part(40).x, landmarks.part(40).y),
                                     (landmarks.part(41).x, landmarks.part(41).y)], np.int32)
 
-        cv2.polylines(frame, [left_eye_region], True, (0, 150, 255), 2)
 
         min_x = np.min(left_eye_region[:, 0])
         max_x = np.max(left_eye_region[:, 0])
         min_y = np.min(left_eye_region[:, 1])
         max_y = np.max(left_eye_region[:, 1])
 
-        eye = frame[min_y: max_y, min_x: max_x]
+        height = np.size(frame, 0)
+        width = np.size(frame, 1)
+
+        black_img = np.zeros((height, width), dtype="uint8")
+        cv2.polylines(black_img, [left_eye_region], True, 255, 2)
+        cv2.fillPoly(black_img, [left_eye_region], 255)
+
+        result_eye = cv2.bitwise_and(frame, frame, mask=black_img)
+
+        eye = result_eye[min_y: max_y, min_x: max_x]
         eye = cv2.resize(eye, None, fx=5, fy=5)
 
-        #print(eye)
 
         cv2.imshow('Eye', eye)
+
+        #creating threshold for eye
+        gray_eye = cv2.cvtColor(eye, cv2.COLOR_BGR2GRAY)
+        T, B = cv2.threshold(gray_eye, 50, maxval=255, type=cv2.THRESH_BINARY)
+
+
+
+        cv2.imshow('Black Frame', black_img)
+        cv2.imshow('Thresh Eye', B)
+
+        cv2.imshow('result', result_eye)
 
     cv2.imshow('frame', frame)
 
