@@ -53,6 +53,27 @@ def get_blinking_ratio(eye_points, facial_landmarks):
     ratio = hor_line_length / ver_line_length
     return ratio
 
+
+def get_eye_shape(eye_points, facial_landmarks, black_image):
+    # Track gaze
+    eye_region = np.array([(facial_landmarks.part(eye_points[0]).x, facial_landmarks.part(eye_points[0]).y),
+                                (facial_landmarks.part(eye_points[1]).x, facial_landmarks.part(eye_points[1]).y),
+                                (facial_landmarks.part(eye_points[2]).x, facial_landmarks.part(eye_points[2]).y),
+                                (facial_landmarks.part(eye_points[3]).x, facial_landmarks.part(eye_points[3]).y),
+                                (facial_landmarks.part(eye_points[4]).x, facial_landmarks.part(eye_points[4]).y),
+                                (facial_landmarks.part(eye_points[5]).x, facial_landmarks.part(eye_points[5]).y)], np.int32)
+
+    min_x = np.min(eye_region[:, 0])
+    max_x = np.max(eye_region[:, 0])
+    min_y = np.min(eye_region[:, 1])
+    max_y = np.max(eye_region[:, 1])
+
+    cv2.polylines(black_image, [eye_region], True, 255, 2)
+    cv2.fillPoly(black_image, [eye_region], 255)
+
+    return min_x, max_x, min_y, max_y, black_image
+
+
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -83,6 +104,8 @@ while True:
         right_eye_ratio = get_blinking_ratio([42, 43, 44, 45, 46, 47], landmarks)
 
 
+
+
         print(landmarks)
 
         # mapping each facial landmark
@@ -100,30 +123,19 @@ while True:
             cv2.putText(frame, "BLINKING", (50, 150), font, 3, (255, 0, 0))
 
 
-        #Track gaze
-        left_eye_region = np.array([(landmarks.part(36).x, landmarks.part(36).y),
-                                    (landmarks.part(37).x, landmarks.part(37).y),
-                                    (landmarks.part(38).x, landmarks.part(38).y),
-                                    (landmarks.part(39).x, landmarks.part(39).y),
-                                    (landmarks.part(40).x, landmarks.part(40).y),
-                                    (landmarks.part(41).x, landmarks.part(41).y)], np.int32)
-
-
-        min_x = np.min(left_eye_region[:, 0])
-        max_x = np.max(left_eye_region[:, 0])
-        min_y = np.min(left_eye_region[:, 1])
-        max_y = np.max(left_eye_region[:, 1])
 
         height = np.size(frame, 0)
         width = np.size(frame, 1)
 
         black_img = np.zeros((height, width), dtype="uint8")
-        cv2.polylines(black_img, [left_eye_region], True, 255, 2)
-        cv2.fillPoly(black_img, [left_eye_region], 255)
+
+        min_x_left, max_x_left, min_y_left, max_y_left, black_img = get_eye_shape([36, 37, 38, 39, 40, 41], landmarks, black_img)
+        min_x_right, max_x_right, min_y_right, max_y_right, black_img = get_eye_shape([42, 43, 44, 45, 46, 47], landmarks, black_img)
 
         result_eye = cv2.bitwise_and(frame, frame, mask=black_img)
 
-        eye = result_eye[min_y: max_y, min_x: max_x]
+        eye = result_eye[min_y_left: max_y_left, min_x_left: max_x_left]
+        eye = result_eye[min_y_right: max_y_right, min_x_right: max_x_right]
         eye = cv2.resize(eye, None, fx=5, fy=5)
 
 
@@ -132,6 +144,36 @@ while True:
         #creating threshold for eye
         gray_eye = cv2.cvtColor(eye, cv2.COLOR_BGR2GRAY)
         T, B = cv2.threshold(gray_eye, 50, maxval=255, type=cv2.THRESH_BINARY)
+
+        eye_height = np.size(gray_eye, 0)
+        eye_width = np.size(gray_eye, 1)
+
+        left_white_eye_L = gray_eye[0:eye_height, 0:int(eye_width/2)]
+        right_white_eye_L = gray_eye[0:eye_height, int(eye_width/2):eye_width]
+
+        left_white_eye_R = gray_eye[0:eye_height, 0:int(eye_width / 2)]
+        right_white_eye_R = gray_eye[0:eye_height, int(eye_width / 2):eye_width]
+
+
+        left_white_amount_L = cv2.countNonZero(left_white_eye_L)
+        right_white_amount_L = cv2.countNonZero(right_white_eye_L)
+        left_white_amount_R = cv2.countNonZero(left_white_eye_R)
+        right_white_amount_R = cv2.countNonZero(right_white_eye_R)
+
+        white_ratio_L = left_white_amount_L/right_white_amount_L
+        white_ratio_R = left_white_amount_R/right_white_amount_R
+
+        gaze_ratio = (white_ratio_L+white_ratio_R)/2
+
+        cv2.putText(frame, str(gaze_ratio), (50, 150), font, 3, (255, 0, 0))
+
+
+        if gaze_ratio < 0.83:
+            cv2.putText(frame, 'LEFT', (100, 200), font, 3, (255, 0, 0))
+        if 0.83 <= gaze_ratio < 0.94:
+            cv2.putText(frame, 'CENTER', (100, 200), font, 3, (255, 0, 0))
+        if gaze_ratio >= 0.94:
+            cv2.putText(frame, 'RIGHT', (100, 200), font, 3, (255, 0, 0))
 
 
 
