@@ -184,13 +184,8 @@ while True:
 
     cv2.imshow('frame', frame)
 
-    key = cv2.waitKey(1)
-    if key == 27:
-        cap.release()
-        cv2.destroyAllWindows()
-
     # save on pressing 'y'
-'''    if cv2.waitKey(1) & 0xFF == ord('y'):
+    if cv2.waitKey(1) & 0xFF == ord('y'):
         for n in range(0, 68):
             x = landmarks.part(n).x
             y = landmarks.part(n).y
@@ -198,6 +193,16 @@ while True:
             # print('y :', y)
             face_points.append(x)
             face_points.append(y)
+        if gaze_ratio < 0.85:
+            cv2.putText(frame, 'LEFT', (100, 200), font, 3, (255, 0, 0))
+            face_points.append(0)
+        if 0.85 <= gaze_ratio < 0.94:
+            cv2.putText(frame, 'CENTER', (100, 200), font, 3, (255, 0, 0))
+            face_points.append(1)
+        if gaze_ratio >= 0.94:
+            cv2.putText(frame, 'RIGHT', (100, 200), font, 3, (255, 0, 0))
+            face_points.append(2)
+
 
         with open('test.csv', 'a', newline='') as myFile:
             wr = csv.writer(myFile)
@@ -205,10 +210,10 @@ while True:
 
         face_points = []
 
-    if cv2.waitKey(10) == 27:
-                cap.release()
-                cv2.destroyAllWindows()
-                break
+    if cv2.waitKey(1) == 27:
+        cap.release()
+        cv2.destroyAllWindows()
+        break
 cap.release()
 cv2.destroyAllWindows()
 # print('landmarks:  ', face_points)'''
