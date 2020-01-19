@@ -26,13 +26,17 @@ from math import hypot
 import numpy as np
 
 
+
+
 cap = cv2.VideoCapture(0)
 
 #dlib face detector and facial landmark detector models
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 face_points = list()
-
+capture = False
+numframes = 5
+currentframes = 0
 
 def midpoint(p1, p2):
     return int((p1.x + p2.x) / 2), int((p1.y + p2.y) / 2)
@@ -102,9 +106,6 @@ while True:
 
         left_eye_ratio = get_blinking_ratio([36, 37, 38, 39, 40, 41], landmarks)
         right_eye_ratio = get_blinking_ratio([42, 43, 44, 45, 46, 47], landmarks)
-
-
-
 
         print(landmarks)
 
@@ -185,7 +186,14 @@ while True:
     cv2.imshow('frame', frame)
 
     # save on pressing 'y'
-    if cv2.waitKey(1) & 0xFF == ord('y'):
+    if (cv2.waitKey(1) & 0xFF == ord('y')) or capture:
+        if currentframes < numframes:
+            capture = True
+            currentframes = currentframes + 1
+        if currentframes == numframes:
+            capture = False
+            currentframes = 0
+
         for n in range(0, 68):
             x = landmarks.part(n).x
             y = landmarks.part(n).y
@@ -202,7 +210,10 @@ while True:
         if gaze_ratio >= 0.94:
             cv2.putText(frame, 'RIGHT', (100, 200), font, 3, (255, 0, 0))
             face_points.append(2)
-
+        if blinking_ratio > 5.7:
+            face_points.append(1)
+        else:
+            face_points.append(0)
 
         with open('test.csv', 'a', newline='') as myFile:
             wr = csv.writer(myFile)
