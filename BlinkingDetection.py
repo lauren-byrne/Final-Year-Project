@@ -39,9 +39,11 @@ detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 face_points = list()
 capture = False
-numframes = 5
+numframes = 40
 currentframes = 0
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+running = True
+
+cap = cv2.VideoCapture('videos/Q3.mp4')
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 
@@ -101,8 +103,12 @@ def get_eye_shape(eye_points, facial_landmarks, black_image):
 while True:
     _, frame = cap.read()
 
+    frame = cv2.resize(frame, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_LINEAR)
+    #frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+
     # creating a grayscale image
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
 
     if cap.isOpened():
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -218,7 +224,8 @@ while True:
     cv2.imshow('frame', frame)
 
     # save on pressing 'y'
-    if (cv2.waitKey(1) & 0xFF == ord('y')) or capture:
+    if running or capture:
+        running = False
         if currentframes < numframes:
             capture = True
             currentframes = currentframes + 1
@@ -235,17 +242,17 @@ while True:
             face_points.append(y)
         if gaze_ratio < 0.85:
             cv2.putText(frame, 'LEFT', (100, 200), font, 3, (255, 0, 0))
-            face_points.append(0)
+            face_points.append('left')
         if 0.85 <= gaze_ratio < 0.94:
             cv2.putText(frame, 'CENTER', (100, 200), font, 3, (255, 0, 0))
-            face_points.append(1)
+            face_points.append('center')
         if gaze_ratio >= 0.94:
             cv2.putText(frame, 'RIGHT', (100, 200), font, 3, (255, 0, 0))
-            face_points.append(2)
+            face_points.append('right')
         if blinking_ratio > 5.7:
-            face_points.append(1)
+            face_points.append('blink')
         else:
-            face_points.append(0)
+            face_points.append('no blink')
 
         with open('test.csv', 'a', newline='') as myFile:
             wr = csv.writer(myFile)
