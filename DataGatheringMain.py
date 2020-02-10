@@ -30,11 +30,9 @@ import dlib
 import csv
 import math
 import numpy as np
-import pytesseract
-from scipy import stats
 from imutils import face_utils
-from imutils.object_detection import non_max_suppression
 from gazeTracking import get_eye_shape, get_white_ratio
+from blushTracking import get_blush_change
 
 cap = cv2.VideoCapture(0)
 
@@ -196,30 +194,15 @@ while True:
         crop = frame[landmarks2[29][1]:landmarks2[33][1], landmarks2[54][0]:landmarks2[12][0]]  # right cheeks
         crop2 = frame[landmarks2[29][1]:landmarks2[33][1], landmarks2[4][0]:landmarks2[48][0]]  # left cheek
 
-        crop = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-        crop2 = cv2.cvtColor(crop2, cv2.COLOR_BGR2GRAY)
-
-        # cv2.imshow('right cheek', crop)
-        # cv2.imshow('left cheek', crop2)
-
-        cheek_average = (np.mean(crop) + np.mean(crop2))
-
-        cheek_list.append(cheek_average)
-        cheek_array = mat = np.array(cheek_list)
-        # print('cheek list: ', cheek_list)
+        cheek_average = get_blush_change(frame, cheek_list, [29, 1, 33, 1, 54, 0, 12, 4, 48], landmarks)
 
         if cheek_control == 0:
             cheek_control = cheek_average
-        # print('z_score: ', stats.zscore(cheek_list))
 
         cheek_difference = ((cheek_control - cheek_average) / cheek_control) * 100
 
-       # contours, h = cv2.findContours(B, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        print('average: ', cheek_average, '\n control: ', cheek_control)
 
-       # for c in contours:
-       #     if len(contours) != 0:
-       #         area = cv2.contourArea(c)
-       #         cv2.drawContours(eye, contours, contourIdx=-1, color=(0, 0, 255), thickness=2)
 
         right_mouth1 = landmarks.part(54)
         right_mouth2 = landmarks.part(55)
