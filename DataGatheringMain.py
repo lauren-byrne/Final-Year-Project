@@ -30,11 +30,11 @@ import dlib
 import csv
 import math
 import numpy as np
-from imutils import face_utils
 from gazeTracking import get_eye_shape, get_white_ratio
 from blushTracking import get_blush_change
 from pointMaths import midpoint
 from blinkTracking import get_blinking_ratio
+from eyebrowTracking import get_eyebrow_ratio
 
 cap = cv2.VideoCapture(0)
 
@@ -54,25 +54,6 @@ _, frame = cap.read()
 
 # cap = cv2.VideoCapture('videos/Q3.mp4')
 font = cv2.FONT_HERSHEY_SIMPLEX
-
-
-
-def get_eyebrow_ratio(eyebrow_points, facial_landmarks):
-    lower_left_point = (facial_landmarks.part(eyebrow_points[0]).x, facial_landmarks.part(eyebrow_points[0]).y)
-    lower_right_point = (facial_landmarks.part(eyebrow_points[1]).x, facial_landmarks.part(eyebrow_points[1]).y)
-    center = midpoint(facial_landmarks.part(eyebrow_points[2]), facial_landmarks.part(eyebrow_points[2]))
-    upper_left_point = midpoint(facial_landmarks.part(eyebrow_points[3]), facial_landmarks.part(eyebrow_points[2]))
-    upper_right_point = midpoint(facial_landmarks.part(eyebrow_points[4]), facial_landmarks.part(eyebrow_points[2]))
-
-    dist1 = math.sqrt(((lower_left_point[0] - center[0]) ** 2) + ((lower_left_point[1] - center[1]) ** 2))
-    dist2 = math.sqrt(((lower_right_point[0] - center[0]) ** 2) + ((lower_right_point[1] - center[1]) ** 2))
-    ratio = dist1/dist2
-
-    dist3 = math.sqrt(((upper_left_point[0] - center[0]) ** 2) + ((upper_left_point[1] - center[1]) ** 2))
-    dist4 = math.sqrt(((upper_right_point[0] - center[0]) ** 2) + ((upper_right_point[1] - center[1]) ** 2))
-    ratio2 = dist3/dist4
-
-    return ratio, ratio2
 
 
 while True:
@@ -120,8 +101,8 @@ while True:
         blinking_ratio = (right_eye_ratio + left_eye_ratio) / 2
         # cv2.putText(frame, str(blinking_ratio), (50, 150), font, 3, (255, 0, 0))
 
-        if blinking_ratio > 4.5:
-            cv2.putText(frame, "BLINKING", (50, 150), font, 3, (255, 0, 0))
+        #if blinking_ratio > 4.5:
+         #   cv2.putText(frame, "BLINKING", (50, 150), font, 3, (255, 0, 0))
 
         # creating new black frame that is same size and width as original frame
         black_img = np.zeros((height, width), dtype="uint8")
@@ -139,12 +120,12 @@ while True:
 
         gaze_ratio = (left_ratio + right_ratio) / 2
 
-        if gaze_ratio < 0.85:
-            cv2.putText(frame, 'LEFT', (100, 200), font, 3, (255, 0, 0))
-        if 0.85 <= gaze_ratio < 0.94:
-            cv2.putText(frame, 'CENTER', (100, 200), font, 3, (255, 0, 0))
-        if gaze_ratio >= 0.94:
-            cv2.putText(frame, 'RIGHT', (100, 200), font, 3, (255, 0, 0))
+        #if gaze_ratio < 0.85:
+         #   cv2.putText(frame, 'LEFT', (100, 200), font, 3, (255, 0, 0))
+        #if 0.85 <= gaze_ratio < 0.94:
+         #   cv2.putText(frame, 'CENTER', (100, 200), font, 3, (255, 0, 0))
+        #if gaze_ratio >= 0.94:
+         #   cv2.putText(frame, 'RIGHT', (100, 200), font, 3, (255, 0, 0))
 
         #  cv2.putText(frame, str(gaze_ratio), (50, 150), font, 3, (255, 0, 0))
 
@@ -194,12 +175,12 @@ while True:
 
         #print('ratio: ', upper_eyebrow_ratio)
 
-       # if eyebrow_ratio < 0.72:
-        #    cv2.putText(frame, 'frown', (50, 150), font, 3, (255, 0, 0))
-        #elif eyebrow_ratio > 0.765 or upper_eyebrow_ratio > 0.705:
-         #   cv2.putText(frame, 'raised', (50, 150), font, 3, (255, 0, 0))
-        #else:
-         #   cv2.putText(frame, 'normal', (50, 150), font, 3, (255, 0, 0))
+        if eyebrow_ratio < 0.72:
+            cv2.putText(frame, 'frown', (50, 150), font, 3, (255, 0, 0))
+        elif eyebrow_ratio > 0.765 or upper_eyebrow_ratio > 0.705:
+            cv2.putText(frame, 'raised', (50, 150), font, 3, (255, 0, 0))
+        else:
+            cv2.putText(frame, 'normal', (50, 150), font, 3, (255, 0, 0))
 
     cv2.imshow('frame', frame)
 
