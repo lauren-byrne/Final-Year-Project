@@ -32,7 +32,6 @@ import math
 import numpy as np
 from gazeTracking import get_eye_shape, get_white_ratio
 from blushTracking import get_blush_change
-from pointMaths import midpoint
 from blinkTracking import get_blinking_ratio
 from eyebrowTracking import get_eyebrow_ratio
 
@@ -51,8 +50,6 @@ numframes = 40
 currentframes = 0
 running = True
 _, frame = cap.read()
-
-# cap = cv2.VideoCapture('videos/Q3.mp4')
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 
@@ -83,8 +80,6 @@ while True:
 
         # predict facial landmarks
         landmarks = predictor(gray, face)
-
-        print(landmarks)
 
         # mapping each facial landmark
         for n in range(0, 68):
@@ -186,7 +181,6 @@ while True:
 
     # save on pressing 'y'
     if (cv2.waitKey(1) & 0xFF == ord('y')) or capture:
-        # running = False
         if currentframes < numframes:
             capture = True
             currentframes = currentframes + 1
