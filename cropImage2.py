@@ -1,6 +1,4 @@
 import cv2
-import numpy as np
-
 
 def get_cropped_image2(img):
     frame_changed = False
