@@ -1,7 +1,7 @@
 import cv2
 from cropImage2 import get_cropped_image2
 
-cap = cv2.VideoCapture('sidebyside.mp4')
+cap = cv2.VideoCapture('kyle_test.mp4')
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
 writeVideo = False
@@ -25,9 +25,6 @@ while True:
                 int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
     cropped = get_cropped_image2(frame)
-
-
-
 
     if cropped:
         videos.append(frame)
