@@ -188,7 +188,7 @@ while True:
 
         ratiodist = dist2/dist1
 
-        print('ratio: ', ratiodist)
+        #print('ratio: ', ratiodist)
         #cv2.putText(faceAligned, str(ratiodist), (100, 200), font, 3, (255, 0, 0))
 
         #if ratiodist > 0.208:
@@ -204,7 +204,6 @@ while True:
          #   cv2.putText(faceAligned, 'normal', (20, 50), font, 2, (255, 0, 0))
 
     cv2.imshow('frame', frame)
-
     cv2.imshow("Aligned", faceAligned)
 
     # save on pressing 'y'
