@@ -29,17 +29,22 @@ import cv2
 import dlib
 import csv
 import math
+import imutils
 import numpy as np
 from gazeTracking import get_eye_shape, get_white_ratio
 from blushTracking import get_blush_change
 from blinkTracking import get_blinking_ratio
 from eyebrowTracking import get_eyebrow_ratio
-
-cap = cv2.VideoCapture(0)
+from imutils.face_utils import FaceAligner
+from imutils.face_utils import rect_to_bb
+import pointMaths
+cap = cv2.VideoCapture('sidebyside.mp4')
 
 # dlib face detector and facial landmark detector models
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+fa = FaceAligner(predictor, desiredFaceWidth=256)
+
 
 cheek_control = 0
 cheek_list = []
@@ -68,24 +73,34 @@ while True:
         size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
                 int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
-    # using fact detection model
+    #frame = imutils.resize(frame, width=800)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # show the original input image and detect faces in the grayscale
+    # image
     faces = detector(gray)
 
+    # loop over the face detections
     for face in faces:
-        x1, y1 = face.left(), face.top()
-        x2, y2 = face.right(), face.bottom()
+        # extract the ROI of the *original* face, then align the face
+        # using facial landmarks
+        (x, y, w, h) = rect_to_bb(face)
+        faceOrig = imutils.resize(frame[y:y + h, x:x + w], width=256)
+        faceAligned = fa.align(frame, gray, face)
 
-        # draw rectangle around detected face using points found in face detection
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
+    gray2 = cv2.cvtColor(faceAligned, cv2.COLOR_BGR2GRAY)
+    faces2 = detector(gray2)
 
+    for face in faces2:
         # predict facial landmarks
-        landmarks = predictor(gray, face)
+        landmarks = predictor(gray2, face)
 
         # mapping each facial landmark
         for n in range(0, 68):
             x = landmarks.part(n).x
             y = landmarks.part(n).y
-            cv2.circle(frame, (x, y), 1, (255, 0, 0), -1)
+            cv2.circle(faceAligned, (x, y), 1, (255, 0, 0), -1)
+
+
 
         # calling function to calculate blink using landmarks from left eye, and landmarks from right eye
         # returns the ratio of both of both left and right eye that is caused by a blink
@@ -103,10 +118,8 @@ while True:
         black_img = np.zeros((height, width), dtype="uint8")
 
         # calling functions to retrieve the eye shape of both the right and left eye to appear on new black frame
-        min_x_left, max_x_left, min_y_left, max_y_left, black_img = get_eye_shape([36, 37, 38, 39, 40, 41], landmarks,
-                                                                                  black_img)
-        min_x_right, max_x_right, min_y_right, max_y_right, black_img = get_eye_shape([42, 43, 44, 45, 46, 47],
-                                                                                      landmarks, black_img)
+        min_x_left, max_x_left, min_y_left, max_y_left, black_img = get_eye_shape([36, 37, 38, 39, 40, 41], landmarks, black_img)
+        min_x_right, max_x_right, min_y_right, max_y_right, black_img = get_eye_shape([42, 43, 44, 45, 46, 47], landmarks, black_img)
 
         left_ratio = get_white_ratio(min_x_left, max_x_left, min_y_left, max_y_left, black_img, frame)
         right_ratio = get_white_ratio(min_x_right, max_x_right, min_y_right, max_y_right, black_img, frame)
@@ -115,14 +128,14 @@ while True:
 
         gaze_ratio = (left_ratio + right_ratio) / 2
 
-        #if gaze_ratio < 0.85:
+        #if gaze_ratio < 0.90:
          #   cv2.putText(frame, 'LEFT', (100, 200), font, 3, (255, 0, 0))
-        #if 0.85 <= gaze_ratio < 0.94:
-         #   cv2.putText(frame, 'CENTER', (100, 200), font, 3, (255, 0, 0))
-        #if gaze_ratio >= 0.94:
+        #elif gaze_ratio > 0.975:
          #   cv2.putText(frame, 'RIGHT', (100, 200), font, 3, (255, 0, 0))
+        #else:
+         #   cv2.putText(frame, 'CENTER', (100, 200), font, 3, (255, 0, 0))
 
-        #  cv2.putText(frame, str(gaze_ratio), (50, 150), font, 3, (255, 0, 0))
+        #cv2.putText(frame, str(gaze_ratio), (50, 450), font, 3, (255, 0, 0))
 
         cheek_average = get_blush_change(frame, cheek_list, [29, 1, 33, 1, 54, 0, 12, 4, 48], landmarks)
 
@@ -131,8 +144,7 @@ while True:
 
         cheek_difference = ((cheek_control - cheek_average) / cheek_control) * 100
 
-        print('average: ', cheek_average, '\n control: ', cheek_control)
-
+       # print('average: ', cheek_average, '\n control: ', cheek_control)
 
         right_mouth1 = landmarks.part(54)
         right_mouth2 = landmarks.part(55)
@@ -157,27 +169,42 @@ while True:
                                      np.int32)
 
         if control_mouth_length == 0:
-            control_mouth_length = math.sqrt(((landmarks.part(49).y - landmarks.part(55).y) ** 2) + (
-                        (landmarks.part(55).x - landmarks.part(55).x) ** 2))
+            control_mouth_length = math.sqrt(((landmarks.part(49).y - landmarks.part(55).y) ** 2) + ((landmarks.part(55).x - landmarks.part(55).x) ** 2))
 
-        current_mouth_length = math.sqrt(
-            ((landmarks.part(49).y - landmarks.part(55).y) ** 2) + ((landmarks.part(55).x - landmarks.part(55).x) ** 2))
+        current_mouth_length = math.sqrt(((landmarks.part(49).y - landmarks.part(55).y) ** 2) + ((landmarks.part(55).x - landmarks.part(55).x) ** 2))
 
         mouth_distance_increase = ((current_mouth_length - control_mouth_length) / control_mouth_length) * 100.0
         #print('increase: ', mouth_distance_increase)
 
         eyebrow_ratio, upper_eyebrow_ratio = get_eyebrow_ratio([22, 23, 28, 21, 24], landmarks)
 
-        #print('ratio: ', upper_eyebrow_ratio)
+        p1 = (landmarks.part(18).x, landmarks.part(18).y)
+        p2 = (landmarks.part(22).x, landmarks.part(22).y)
+        p3 = (landmarks.part(23).x, landmarks.part(23).y)
 
-        if eyebrow_ratio < 0.72:
+        dist1 = pointMaths.distance(p1, p2)
+        dist2 = pointMaths.distance(p2, p3)
+
+        ratiodist = dist2/dist1
+
+        print('ratio: ', ratiodist)
+        cv2.putText(frame, str(ratiodist), (100, 200), font, 3, (255, 0, 0))
+
+        if ratiodist > 0.208:
             cv2.putText(frame, 'frown', (50, 150), font, 3, (255, 0, 0))
-        elif eyebrow_ratio > 0.765 or upper_eyebrow_ratio > 0.705:
-            cv2.putText(frame, 'raised', (50, 150), font, 3, (255, 0, 0))
         else:
             cv2.putText(frame, 'normal', (50, 150), font, 3, (255, 0, 0))
 
+        #if eyebrow_ratio < 0.71:
+         #   cv2.putText(frame, 'frown', (50, 150), font, 3, (255, 0, 0))
+        #elif eyebrow_ratio > 0.765 or upper_eyebrow_ratio > 0.705:
+         #   cv2.putText(frame, 'raised', (50, 150), font, 3, (255, 0, 0))
+       # else:
+        #    cv2.putText(frame, 'normal', (50, 150), font, 3, (255, 0, 0))
+
     cv2.imshow('frame', frame)
+
+    cv2.imshow("Aligned", faceAligned)
 
     # save on pressing 'y'
     if (cv2.waitKey(1) & 0xFF == ord('y')) or capture:
@@ -191,8 +218,6 @@ while True:
         for n in range(0, 68):
             x = landmarks.part(n).x
             y = landmarks.part(n).y
-            # print('x :', x)
-            # print('y :', y)
             face_points.append(x)
             face_points.append(y)
         if gaze_ratio < 0.85:
