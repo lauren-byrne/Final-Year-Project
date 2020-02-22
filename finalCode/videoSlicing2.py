@@ -1,7 +1,7 @@
 import cv2
 from cropImage2 import get_cropped_image2
 
-cap = cv2.VideoCapture('kyle_test.mp4')
+cap = cv2.VideoCapture('final6.mp4')
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
 writeVideo = False
@@ -14,9 +14,9 @@ while True:
 
     _, frame = cap.read()
     #frame = cv2.resize(frame, (0,0), fx=1.1, fy=1.1)
-    # frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+    frame = cv2.rotate(frame, cv2.ROTATE_180)
 
-    # frame = cv2.resize(frame, (0, 0), fx=0.4, fy=0.4)
+    frame = cv2.resize(frame, (0, 0), fx=0.4, fy=0.4)
 
     if cap.isOpened():
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -35,6 +35,9 @@ while True:
                                   (int(cap.get(3)), int(cap.get(4))))
 
             for images in videos:
+               # images = cv2.rotate(images, cv2.ROTATE_180)
+
+                images = cv2.resize(images, (0, 0), fx=2.5, fy=2.5)
                 out.write(images)
             print('************************  ', count)
             videos = []
