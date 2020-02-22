@@ -7,6 +7,15 @@ startpath='Answers'
 listOfFiles = os.listdir(startpath)
 frame_counter = 0
 
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+
+writeVideo = False
+count = 1
+videos = []
+
+
+
+
 #print(listOfFiles)
 pattern = "*.mp4"
 names = []
@@ -17,6 +26,9 @@ for entry in listOfFiles:
 
 video_index = 0
 cap = cv2.VideoCapture('Answers\\'+names[0])
+
+out = cv2.VideoWriter('AnswerFULL.mp4', fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
+
 print(names[0])
 
 while True:
@@ -31,6 +43,9 @@ while True:
             break
         cap = cv2.VideoCapture('Answers\\'+names[video_index])
         ret, frame = cap.read()
+
+    out.write(frame)
+
 
     cv2.imshow('frame', frame)
 
