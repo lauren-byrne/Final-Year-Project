@@ -1,6 +1,7 @@
 import pointMaths
 
 
+#function to return the two ratio distance of the two eyebrows for current frame
 def get_eyebrow_ratio(eyebrow_points, facial_landmarks):
     lower_left_point = (facial_landmarks.part(eyebrow_points[0]).x, facial_landmarks.part(eyebrow_points[0]).y)
     lower_right_point = (facial_landmarks.part(eyebrow_points[1]).x, facial_landmarks.part(eyebrow_points[1]).y)
