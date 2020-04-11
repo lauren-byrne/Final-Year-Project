@@ -8,8 +8,8 @@ import pandas as pd
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
+from sklearn import svm
 from matplotlib import pyplot as plt
 import seaborn as sns
 import statsmodels.api as sm
@@ -76,7 +76,7 @@ df.head(5)
 #df['Gaze'] = encoder.fit_transform(df['Gaze'])
 #df['Blink'] = encoder.fit_transform(df['Blink'])
 #df['Brows'] = encoder.fit_transform(df['Brows'])
-#df['QuestionType'] = encoder.fit_transform(df['QuestionType'])'''
+#df['QuestionType'] = encoder.fit_transform(df['QuestionType'])
 
 
 # In[8]:
@@ -159,10 +159,16 @@ plt.show()
 # In[17]:
 
 
-# BUILDING CLASSIFIER
-classifier = RandomForestClassifier(n_estimators=10)
+#Create a LINEAR SVM Classifier
+from sklearn.svm import LinearSVC
+classifier = LinearSVC(C=0.1, dual = False) # Linear Kernel
+
+#Train the model using the training sets
 classifier.fit(X_train, y_train)
+
+#Predict the response for test dataset
 y_pred = classifier.predict(X_test)
+
 print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
 
 
